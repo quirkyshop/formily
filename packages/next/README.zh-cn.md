@@ -18,13 +18,13 @@ npm install --save @uform/next
   - [`<Submit/>`](#Submit)
   - [`<Reset/>`](#Reset)
   - [`<Field/>(即将废弃，请使用<SchemaMarkupField/>)`](<#Field(即将废弃，请使用SchemaMarkupField)>)
-- [表单 List](#Array-Components)
+- [表单List](#Array-Components)
   - [`array`](#array)
   - [`cards`](#cards)
   - [`table`](#table)
 - [布局组件](#Layout-Components)
-  - [`<FormBlock/>`](#FormBlock)
   - [`<FormCard/>`](#FormCard)
+  - [`<FormBlock/>`](#FormBlock)  
   - [`<FormStep/>`](#FormStep)
   - [`<FormLayout/>`](#FormLayout)
   - [`<FormItemGrid/>`](#FormItemGrid)
@@ -33,24 +33,26 @@ npm install --save @uform/next
   - [`<TextButton/>`](#TextButton)
   - [`<CircleButton/>`](#CircleButton)
 - [字段类型](#Type-of-SchemaMarkupField)
-  - [string](#string)
-  - [textarea](#textarea)
-  - [password](#password)
-  - [number](#number)
-  - [boolean](#boolean)
-  - [date](#date)
-  - [time](#time)
-  - [range](#range)
-  - [upload](#upload)
-  - [checkbox](#checkbox)
-  - [radio](#radio)
-  - [rating](#rating)
-  - [transfer](#transfer)
+  - [`string`](#string)
+  - [`textarea`](#textarea)
+  - [`password`](#password)
+  - [`number`](#number)
+  - [`boolean`](#boolean)
+  - [`date`](#date)
+  - [`time`](#time)
+  - [`range`](#range)
+  - [`upload`](#upload)
+  - [`checkbox`](#checkbox)
+  - [`radio`](#radio)
+  - [`rating`](#rating)
+  - [`transfer`](#transfer)
 - [API](#API)
   - [`createFormActions`](#createFormActions)
   - [`createAsyncFormActions`](#createAsyncFormActions)
   - [`FormEffectHooks`](#FormEffectHooks)
   - [`createEffectHook`](#createEffectHook)
+  - [`connect`](#connect)
+  - [`registerFormField`](#registerFormField)  
 - [Interfaces](#Interfaces)
   - [`ButtonProps`](#ButtonProps)
   - [`CardProps`](#CardProps)
@@ -64,7 +66,9 @@ npm install --save @uform/next
   - [`ISchemaFormRegistry`](#ISchemaFormRegistry)
   - [`INextSchemaFieldProps`](#INextSchemaFieldProps)
   - [`IPreviewTextProps`](#IPreviewTextProps)
-  - [`INextSchemaFormProps`](#INextSchemaFormProps)
+  - [`IMutators`](#IMutators)
+  - [`IFieldProps`](#IFieldProps)
+  - [`IConnectOptions`](#IConnectOptions)
   
 
 ### 使用方式
@@ -320,31 +324,31 @@ const App = () => {
       rating: {
         type: 'rating',
         title: '等级'
-      }
-      // layout_btb_g: {
-      //   type: 'object',
-      //   'x-component': 'button-group',
-      //   'x-component-props': {
-      //     offset:7,
-      //     sticky: true,
-      //   },
-      //   properties: {
-      //     submit_btn: {
-      //       type: 'object',
-      //       'x-component': 'submit',
-      //       'x-component-props': {
-      //         children: '提交',
-      //       },
-      //     },
-      //     reset_btn: {
-      //       type: 'object',
-      //       'x-component': 'reset',
-      //       'x-component-props': {
-      //         children: '重置',
-      //       },
-      //     },
-      //   }
-      // },
+      },
+      layout_btb_group: {
+        type: 'object',
+        'x-component': 'button-group',
+        'x-component-props': {
+          offset:7,
+          sticky: true,
+        },
+        properties: {
+          submit_btn: {
+            type: 'object',
+            'x-component': 'submit',
+            'x-component-props': {
+              children: '提交',
+            },
+          },
+          reset_btn: {
+            type: 'object',
+            'x-component': 'reset',
+            'x-component-props': {
+              children: '重置',
+            },
+          },
+        }
+      },
     }
   }
   return <SchemaForm actions={actions} schema={schema} />
@@ -359,120 +363,163 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### `<SchemaForm/>`
 
-> SchemaForm 组件 Props
+基于@uform/react 的核心组件SchemaForm进一步扩展出来的SchemaForm组件，推荐生产环境下使用
 
 ```typescript
 interface INextSchemaFormProps {
-  schema?: ISchema
-  fields?: ISchemaFormRegistry['fields']
-  virtualFields?: ISchemaFormRegistry['virtualFields']
-  formComponent?: ISchemaFormRegistry['formComponent']
-  formItemComponent?: ISchemaFormRegistry['formItemComponent']
-  /** 样式前缀 */
-  prefix?: string
+    schema?: ISchema;
+    fields?: ISchemaFormRegistry['fields'];
+    virtualFields?: ISchemaFormRegistry['virtualFields'];
+    formComponent?: ISchemaFormRegistry['formComponent'];
+    formItemComponent?: ISchemaFormRegistry['formItemComponent'];
+    inline?: boolean
+    className?: string
+    style?: React.CSSProperties
+    labelCol?: number | { span: number; offset?: number }
+    wrapperCol?: number | { span: number; offset?: number }
+    previewPlaceholder?: string | ((props: IPreviewTextProps) => string);
+    // 样式前缀
+    prefix?: string;
 
-  /** 内联表单 */
-  inline?: boolean
+    // 内联表单
+    inline?: boolean;
 
-  /** 单个 Item 的 size 自定义，优先级高于 Form 的 size, 并且当组件与 Item 一起使用时，组件自身设置 size 属性无效。 */
-  size?: 'large' | 'medium' | 'small'
+    // 单个 Item 的 size 自定义，优先级高于 Form 的 size, 并且当组件与 Item 一起使用时，组件自身设置 size 属性无效。
+    size?: 'large' | 'medium' | 'small';
 
-  /** 标签的位置*/
-  labelAlign?: 'top' | 'left' | 'inset'
+    // 标签的位置
+    labelAlign?: 'top' | 'left' | 'inset';
 
-  /** * 标签的左右对齐方式 */
-  labelTextAlign?: 'left' | 'right'
+    // 标签的左右对齐方式
+    labelTextAlign?: 'left' | 'right';
 
-  /** 保存 Form 自动生成的 field 对象 */
-  saveField?: () => void
+    // 经 `new Field(this)` 初始化后，直接传给 Form 即可 用到表单校验则不可忽略此项
+    field?: any;
 
-  /** 控制第一级 Item 的 labelCol */
-  labelCol?: {}
+    // 保存 Form 自动生成的 field 对象
+    saveField?: () => void;
 
-  /**
-   * 控制第一级 Item 的 wrapperCol
-   */
-  wrapperCol?: {}
+    // 控制第一级 Item 的 labelCol
+    labelCol?: {};
 
-  /** form内有 `htmlType="submit"` 的元素的或actions.submit的时候会触发，返回值支持Promise. */
-  onSubmit?: () => Promise<IFormSubmitResult>
+    // 控制第一级 Item 的 wrapperCol
+    wrapperCol?: {};
 
-  /** 子元素 */
-  children?: any
+    // form内有 `htmlType="submit"` 或 actions.submit时 触发
+    onSubmit?: () => void;
 
-  /** 扩展class */
-  className?: string
+    // 子元素
+    children?: any;
 
-  /** 自定义内联样式 */
-  style?: React.CSSProperties
+    // 扩展class
+    className?: string;
 
-  /** 表单数值 */
-  value?: {}
+    // 自定义内联样式
+    style?: React.CSSProperties;
 
-  /** 表单变化回调 */
-  onChange?: (values: {}) => void
+    // 表单数值
+    value?: {};
 
-  /** 设置标签类型 */
-  component?: string | (() => void)
-  inline?: boolean
-  className?: string
-  style?: React.CSSProperties
-  labelCol?: number | { span: number; offset?: number }
-  wrapperCol?: number | { span: number; offset?: number }
-  previewPlaceholder?: string | ((props: IPreviewTextProps) => string)
+    // 表单变化回调
+    onChange?: (values: {}, item: {}) => void;
+
+    // 设置标签类型
+    component?: string | (() => void);
 }
 ```
 
 **用法**
 
+例子1: 将a-mirror的值设置为a的值。
+
 ```jsx
-import React from 'react'
+import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
-import {
-  SchemaForm,
-  Field,
+import SchemaForm, {
+  registerFormField,
+  Field,  
+  connect,
+  createFormActions
+} from '@uform/next'
+
+const actions = createFormActions()
+
+registerFormField(
+  'string',
+  connect()(props => <input {...props} value={props.value || ''} />)
+)
+
+ReactDOM.render(
+    <SchemaForm actions={actions} effects={($)=>{
+       $('onFieldChange','a').subscribe((fieldState)=>{
+         actions.setFieldState('a-mirror',state=>{
+           state.value = fieldState.value
+         })
+       })
+    }}>
+       <Field type="string" name="a" title="a"/>
+       <Field type="string" name="a-mirror" title="a-mirror"/>
+    </SchemaForm>,
+    document.getElementById('root')
+)
+```
+
+
+例子2： 布局
+
+```jsx
+import React, { Component } from 'react'
+import ReactDOM from 'react-dom'
+import SchemaForm, {
+  Field,  
+  createFormActions,
+  FormLayout,
   FormButtonGroup,
   Submit,
   Reset,
-  FormItemGrid,
-  FormCard,
-  FormBlock,
-  FormLayout
 } from '@uform/next'
-import { Button } from '@alifd/next'
-import '@alifd/next/dist/next.css'
-const App = () => {
-  return (
-    <React.Fragment>
-      <h5>常规布局</h5>
-      <SchemaForm>
-        <FormLayout labelCol={8} wrapperCol={6}>
-          <Field name="aaa" type="string" title="字段1" />
-          <Field name="bbb" type="number" title="字段2" />
-          <Field name="ccc" type="date" title="字段3" />
-        </FormLayout>
-        <FormButtonGroup offset={8}>
-          <Submit>提交</Submit>​ <Reset>重置</Reset>​
-        </FormButtonGroup>
-      </SchemaForm>
-      <h5>inline布局</h5>
-      <SchemaForm inline>
-        <Field name="aaa" type="string" title="字段1" />
-        <Field name="bbb" type="number" title="字段2" />
-        <Field name="ccc" type="date" title="字段3" />​
-        <FormButtonGroup>
-          <Submit>提交</Submit>​ <Reset>重置</Reset>​
-        </FormButtonGroup>
-      </SchemaForm>
-    </React.Fragment>
-  )
-}
-ReactDOM.render(<App />, document.getElementById('root'))
+
+const actions = createFormActions()
+
+ReactDOM.render(
+    <div>
+    <h5>常规布局</h5>
+    <SchemaForm>
+      <FormLayout labelCol={8} wrapperCol={6}>
+        <Field name="aaa" type="string" title="field1" />
+        <Field name="bbb" type="number" title="field2" />
+        <Field name="ccc" type="date" title="field3" />
+      </FormLayout>
+      <FormButtonGroup offset={8}>
+        <Submit>提交</Submit>​ <Reset>重置</Reset>​
+      </FormButtonGroup>
+    </SchemaForm>
+    <h5>Inline Layout</h5>
+    <SchemaForm inline>
+      <Field name="aaa" type="string" title="field1" />
+      <Field name="bbb" type="number" title="field2" />
+      <Field name="ccc" type="date" title="field3" />​
+      <FormButtonGroup>
+        <Submit>提交</Submit>​ <Reset>重置</Reset>​
+      </FormButtonGroup>
+    </SchemaForm>
+    <h5>editable = false</h5>
+    <SchemaForm inline editable={false}>
+      <Field name="aaa" type="string" title="field1" />
+      <Field name="bbb" type="number" title="field2" />
+      <Field name="ccc" type="date" title="field3" />​
+      <FormButtonGroup>
+        <Submit>提交</Submit>​ <Reset>重置</Reset>​
+      </FormButtonGroup>
+    </SchemaForm>
+    </div>,
+    document.getElementById('root')
+)
 ```
 
 #### `<SchemaMarkupField/>`
 
-> SchemaMarkupField 组件 Props
+> @uform/next 的核心组件，用于描述表单字段
 
 ```typescript
 interface IMarkupSchemaFieldProps {
@@ -532,52 +579,51 @@ interface IMarkupSchemaFieldProps {
 }
 ```
 
-**用法**
+##### 用法
+
 
 ```jsx
-import React, { useState } from 'react'
+import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
-import {
-  SchemaForm,
-  Field,
-  FormTextBox,
-  FormCard,
+import SchemaForm, {
+  FormSlot,
+  Field,  
+  createFormActions,
   FormLayout,
-  FormSlot
+  FormButtonGroup,
+  Submit,
+  Reset,
 } from '@uform/next'
-import { Button } from '@alifd/next'
-import Printer from '@uform/printer'
-import '@alifd/next/dist/next.css'
 
-const App = () => {
-  return (
+const actions = createFormActions()
+
+ReactDOM.render(
     <SchemaForm>
-      <FormSlot>x-props</FormSlot>
-      <Field
-        type="string"
-        default={10}
-        required
-        name="a"
-        x-props={{ style: { width: 80 } }}
-        description="desc1"
-      />
+      <FormSlot><div>required</div></FormSlot>
+      <Field name="a" required type="string" title="field1" />
+      
+      <FormSlot><div>description</div></FormSlot>
+      <Field name="b" description="description" type="string" title="field1" />
+      
+      <FormSlot><div>default value</div></FormSlot>
+      <Field name="c" default={10} type="string" title="field1" />
 
-      <FormSlot>readOnly = true</FormSlot>
-      <Field type="string" readOnly name="b" />
+      <FormSlot><div>readOnly</div></FormSlot>
+      <Field name="d" readOnly default={10} type="string" title="field1" />
 
-      <FormSlot>editable = false</FormSlot>
-      <Field type="string" editable={false} name="c" />
+      <FormSlot><div>visible = false</div></FormSlot>
+      <Field name="e" visible={false} default={10} type="string" title="field1" />
 
-      <FormSlot>visible = false</FormSlot>
-      <Field type="string" visible={false} name="c" />
+      <FormSlot><div>display = false</div></FormSlot>
+      <Field name="f" visible={false} default={10} type="string" title="field1" />
 
-      <FormSlot>title</FormSlot>
-      <Field type="string" title="title" name="d" />
-    </SchemaForm>
-  )
-}
-ReactDOM.render(<App />, document.getElementById('root'))
+      <FormSlot><div>editable = false</div></FormSlot>
+      <Field name="g" editable={false} default={10} type="string" title="field1" />
+    </SchemaForm>,
+    document.getElementById('root')
+)
 ```
+
 
 #### `<Submit/>`
 
@@ -878,6 +924,30 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 ### Layout Components
 
+
+#### `<FormCard/>`
+
+> FormCard 组件 Props, 完全继承自 [CardProps](#CardProps)。
+> FormCard与[FormBlock](#FormBlock) 唯一区别是样式上是否有框
+
+**用法**
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom'
+import SchemaForm, { FormCard, SchemaMarkupField as Field } from '@uform/next'
+import '@alifd/next/dist/next.css'
+
+const App = () => (
+  <SchemaForm>
+    <FormCard title="block">
+      <Field type="string" name="username" title="username" />
+    </FormCard>
+  </SchemaForm>
+)
+ReactDOM.render(<App />, document.getElementById('root'))
+```
+
 #### `<FormBlock/>`
 
 > FormBlock 组件 Props, 完全继承自 [CardProps](#CardProps)
@@ -895,28 +965,6 @@ const App = () => (
     <FormBlock title="block">
       <Field type="string" name="username" title="username" />
     </FormBlock>
-  </SchemaForm>
-)
-ReactDOM.render(<App />, document.getElementById('root'))
-```
-
-#### `<FormCard/>`
-
-> FormCard 组件 Props, 完全继承自 [CardProps](#CardProps)
-
-**用法**
-
-```jsx
-import React from 'react'
-import ReactDOM from 'react-dom'
-import SchemaForm, { FormCard, SchemaMarkupField as Field } from '@uform/next'
-import '@alifd/next/dist/next.css'
-
-const App = () => (
-  <SchemaForm>
-    <FormCard title="block">
-      <Field type="string" name="username" title="username" />
-    </FormCard>
   </SchemaForm>
 )
 ReactDOM.render(<App />, document.getElementById('root'))
@@ -950,6 +998,95 @@ interface IFormStep {
 ```
 
 **用法**
+
+```jsx
+import {
+  SchemaForm,
+  Field,
+  FormButtonGroup,
+  Submit,
+  FormEffectHooks,
+  createFormActions,
+  FormGridRow,
+  FormItemGrid,
+  FormGridCol,
+  FormPath,
+  FormLayout,
+  FormBlock,
+  FormCard,
+  FormTextBox,
+  FormStep
+} from '@uform/next'
+import { Button } from '@alifd/next'
+import '@alifd/next/dist/next.css'
+
+const { onFormInit$ } = FormEffectHooks
+
+const actions = createFormActions()
+
+let cache = {}
+
+export default () => (
+  <SchemaForm
+    onSubmit={values => {
+      console.log('提交')
+      console.log(values)
+    }}
+    actions={actions}
+    labelCol={{ span: 8 }}
+    wrapperCol={{ span: 6 }}
+    validateFirst
+    effects={({ setFieldState, getFormGraph }) => {
+      onFormInit$().subscribe(() => {
+        setFieldState('col1', state => {
+          state.visible = false
+        })
+      })
+    }}
+  >
+    <FormStep
+      style={{ marginBottom: 20 }}
+      dataSource={[
+        { title: 'Step1', name: 'step-1' },
+        { title: 'Step2', name: 'step-2' },
+        { title: 'Step3', name: 'step-3' }
+      ]}
+    />
+    <FormCard name="step-1" title="Step1">
+      <Field name="a1" required title="A1" type="string" />
+    </FormCard>
+    <FormCard name="step-2" title="Step2">
+      <Field name="a2" required title="A2" type="string" />
+    </FormCard>
+    <FormCard name="step-3" title="Step3">
+      <Field name="a3" required title="A3" type="string" />
+    </FormCard>
+    <FormButtonGroup>
+      <Submit>提交</Submit>
+      <Button onClick={() => actions.dispatch(FormStep.ON_FORM_STEP_PREVIOUS)}>
+        上一步
+      </Button>
+      <Button onClick={() => actions.dispatch(FormStep.ON_FORM_STEP_NEXT)}>
+        下一步
+      </Button>
+      <Button
+        onClick={() => {
+          cache = actions.getFormGraph()
+        }}
+      >
+        存储当前状态
+      </Button>
+      <Button
+        onClick={() => {
+          actions.setFormGraph(cache)
+        }}
+      >
+        回滚状态
+      </Button>
+    </FormButtonGroup>
+  </SchemaForm>
+)
+```
 
 #### `<FormLayout/>`
 
@@ -1353,7 +1490,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### string
 
-Fusion-Next `<Input/>`, `<Input.Textarea/>`, `<Select/>`
+* Schema Type : `string`
+* Schema UI Component: Fusion-Next `<Input/>`, `<Input.Textarea/>`, `<Select/>`
 
 **用法**
 
@@ -1427,7 +1565,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### textarea
 
-Fusion-Next `<Input.Textarea/>`
+* Schema Type : `string`
+* Schema UI Component: Fusion-Next `<Input.Textarea/>`
 
 **用法**
 
@@ -1467,7 +1606,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### password
 
-Fusion-Next `<Input htmlType="password"/>`
+* Schema Type : `password`
+* Schema UI Component: Fusion-Next `<Input htmlType="password"/>`
 
 ```typescript
 interface IPasswordProps {
@@ -1612,7 +1752,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### number
 
-Fusion-Next `<NumberPicker/>`
+* Schema Type : `number`
+* Schema UI Component: Fusion-Next `<NumberPicker/>`
 
 **用法**
 
@@ -1644,7 +1785,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### boolean
 
-Fusion-Next `<Switch />`
+* Schema Type : `boolean`
+* Schema UI Component: Fusion-Next `<Switch/>`
 
 **用法**
 
@@ -1685,7 +1827,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### date
 
-Fusion-Next `<DatePicker />`
+* Schema Type : `date`
+* Schema UI Component: Fusion-Next `<DatePicker/>`
 
 **用法**
 
@@ -1725,7 +1868,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### time
 
-Fusion-Next `<TimePicker />`
+* Schema Type : `time`
+* Schema UI Component: Fusion-Next `<TimePicker/>`
 
 **用法**
 
@@ -1765,7 +1909,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### range
 
-Fusion-Next `<Range />`
+* Schema Type : `range`
+* Schema UI Component: Fusion-Next `<Range/>`
 
 **用法**
 
@@ -1807,7 +1952,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### upload
 
-Fusion-Next `<Upload />`
+* Schema Type : `upload`
+* Schema UI Component: Fusion-Next `<Upload/>`
 
 **用法**
 
@@ -1865,7 +2011,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### checkbox
 
-Fusion-Next `<Checkbox />`
+* Schema Type : `checkbox`
+* Schema UI Component: Fusion-Next `<Checkbox/>`
 
 **用法**
 
@@ -1915,7 +2062,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### radio
 
-Fusion-Next `<Radio />`
+* Schema Type : `radio`
+* Schema UI Component: Fusion-Next `<Radio/>`
 
 **用法**
 
@@ -1965,7 +2113,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### rating
 
-Fusion-Next `<Rating/>`
+* Schema Type : `rating`
+* Schema UI Component: Fusion-Next `<Rating/>`
 
 **用法**
 
@@ -2004,7 +2153,8 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 #### transfer
 
-Fusion-Next `<Transfer/>`
+* Schema Type : `transfer`
+* Schema UI Component: Fusion-Next `<Transfer/>`
 
 **用法**
 
@@ -2191,6 +2341,58 @@ const App = () => {
       >
         notify diy2
       </button>
+    </SchemaForm>
+  )
+}
+
+ReactDOM.render(<App />, document.getElementById('root'))
+```
+
+#### connect
+
+> 包装字段组件，让字段组件只需要支持value/defaultValue/onChange属性即可快速接入表单
+
+```typescript
+type Connect = <T extends React.ComponentType<IFieldProps>>(options?: IConnectOptions<T>) => 
+(Target: T) => React.PureComponent<IFieldProps>
+```
+**用法**
+
+```typescript
+import {registerFormField,connect} from '@uform/next'
+
+registerFormField(
+  'string',
+  connect()(props => <input {...props} value={props.value || ''} />)
+)
+```
+
+#### registerFormField
+
+```typescript
+type registerFormField(
+   name        : string,                             //类型名称
+   component   : React.ComponentType<IFieldProps>,   //类型组件
+   noMiddleware: boolean                             //是否被middleware包装
+)
+```
+
+**用法**
+
+```jsx
+
+import SchemaForm, { SchemaMarkupField as Field, registerFormField, connect, createFormActions } from '@uform/next'
+
+registerFormField(
+  'custom-string',
+  connect()(props => <input {...props} value={props.value || ''} />)
+)
+const actions = createFormActions()
+
+const App = () => {
+  return (
+    <SchemaForm actions={actions} >
+      <Field type="custom-string" name="custom-string" title="Custom Field" />
     </SchemaForm>
   )
 }
@@ -2398,16 +2600,10 @@ interface IForm {
 }
 ```
 
-### Interfaces
-
-> 整体完全继承@uform/react, 下面只列举@uform/next 的特有的 Interfaces
-
----
-
 #### ButtonProps
 
 ```typescript
-interface ISubmitProps {
+interface ButtonProps {
   /** reset pops **/
   onSubmit?: ISchemaFormProps['onSubmit']
   showLoading?: boolean
@@ -2701,73 +2897,67 @@ interface IPreviewTextProps {
   innerAfter?: React.ReactNode
   addonAfter?: React.ReactNode
 }
+
 ```
 
-#### INextSchemaFormProps
+#### IMutators
 
 ```typescript
-type INextSchemaFormProps = {
-  schema?: ISchema
-  fields?: ISchemaFormRegistry['fields']
-  virtualFields?: ISchemaFormRegistry['virtualFields']
-  formComponent?: ISchemaFormRegistry['formComponent']
-  formItemComponent?: ISchemaFormRegistry['formItemComponent']
-  /** next Form props **/
-  // 样式前缀
-  prefix?: string
-
-  // 内联表单
-  inline?: boolean
-
-  // 单个 Item 的 size 自定义，优先级高于 Form 的 size, 并且当组件与 Item 一起使用时，组件自身设置 size 属性无效。
-  size?: 'large' | 'medium' | 'small'
-
-  // 标签的位置
-  labelAlign?: 'top' | 'left' | 'inset'
-
-  // 标签的左右对齐方式
-  labelTextAlign?: 'left' | 'right'
-
-  // 经 `new Field(this)` 初始化后，直接传给 Form 即可 用到表单校验则不可忽略此项
-  field?: any
-
-  // 保存 Form 自动生成的 field 对象
-  saveField?: () => void
-
-  // 控制第一级 Item 的 labelCol
-  labelCol?: {}
-
-  // 控制第一级 Item 的 wrapperCol
-  wrapperCol?: {}
-
-  // form内有 `htmlType="submit"` 的元素的时候会触发
-  onSubmit?: () => void
-
-  // 子元素
-  children?: any
-
-  // 扩展class
-  className?: string
-
-  // 自定义内联样式
-  style?: React.CSSProperties
-
-  // 表单数值
-  value?: {}
-
-  // 表单变化回调
-  onChange?: (values: {}, item: {}) => void
-
-  // 设置标签类型
-  component?: string | (() => void)
-
-  /** IFormItemTopProps **/
-  inline?: boolean
-  className?: string
-  style?: React.CSSProperties
-  labelCol?: number | { span: number; offset?: number }
-  wrapperCol?: number | { span: number; offset?: number }
-  /** PreviewTextConfigProps **/
-  previewPlaceholder?: string | ((props: IPreviewTextProps) => string)
+interface IMutators<V = any> {
+   change: (value: V)=> void,//改变当前字段值
+   dispatch: (name: string, payload : any) => void,//触发effect事件
+   errors: (errors: string | Array<string>, ...formatValues: Array<string | number>) => void,//设置当前字段的错误消息
+   push(value: V),//对当前字段的值做push操作
+   pop(),//对当前字段的值做pop操作
+   insert(index: number,value: V),//对当前字段的值做insert操作
+   remove(name : string),//对当前字段的值做remove操作
+   unshift(value : V),//对当前字段值做unshift操作
+   shift(),//对当前字段值做shift操作
+   move(fromIndex: number, toIndex: number)//对当前字段值做move操作
 }
+```
+
+#### IFieldProps
+
+```typescript
+interface IFieldProps<V = any> {
+   name                : string //字段数据路径
+   path                : Array<string> //字段数组数据路径
+   value               : V //字段值
+   errors              : Array<string> //字段错误消息集合
+   editable            : boolean | ((name:string) => boolean) //字段是否可编辑
+   locale              : Locale //国际化文案对象
+   loading             : boolean //是否处于加载态
+   schemaPath          : Array<string> //schema path,考虑到有些schema其实是不占数据路径的，所以这个路径是真实路径
+   getSchema           : (path: string) => ISchema //根据路径获取schema
+   renderField         : (childKey: string, reactKey: string | number) => JSX.Element | string | null //根据childKey渲染当前字段的子字段
+   renderComponent     : React.FunctionComponent<Partial<IFieldProps> | undefined>,//渲染当前字段的组件，对于x-render来说，可以借助它快速实现渲染包装功能
+   getOrderProperties  : () => Array<{schema: ISchema, key: number, path: string, name: string }>,//根据properties里字段的x-index值求出排序后的properties
+   mutators            : Mutators,//数据操作对象
+   schema              : ISchema
+}
+
+```
+
+```typescript
+
+interface IConnectOptions<T> {
+  //控制表单组件
+  valueName?: string
+  //事件名称
+  eventName?: string
+  //默认props
+  defaultProps?: Partial<IConnectProps>
+  //取值函数，有些场景我们的事件函数取值并不是事件回调的第一个参数，需要做进一步的定制
+  getValueFromEvent?: (props:  IFieldProps['x-props'], event: Event, ...args: any[]) => any 
+  //字段组件props transformer
+  getProps?: (connectProps: IConnectProps, fieldProps: IFieldProps) => IConnectProps 
+  //字段组件component transformer
+  getComponent?: ( 
+    target: T, 
+    connectProps: IConnectProps,
+    fieldProps: IFieldProps
+  ) => T
+}
+
 ```
