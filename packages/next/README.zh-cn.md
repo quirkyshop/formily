@@ -260,11 +260,35 @@ const App = () => {
 ReactDOM.render(<App />, document.getElementById('root'))
 ```
 
+#### `<FormSlot>`
+
+顾名思义，它就是一个表单的插槽组件，有些场景，表单结构很可能会插入一些跟整个表单 没任何关系的内容，但是它在交互，信息流层面却又是一个值得插入的行为，所以 ，`FormSlot` 就是为了解决这个问题而存在的
+
+**用法**
+
+```tsx
+import React from 'react'
+import { SchemaForm, Field, FormLayout, FormSlot } from '@formily/next'
+
+const App = () => (
+  <SchemaForm>
+    <Field type="object">
+      <FormBlock title="基础信息">
+        <FormSlot>
+          <div>这是一个随意插入的内容</div>
+        </FormSlot>
+      </FormBlock>
+    </Field>
+  </SchemaForm>
+)
+```
+
+
 #### `<Field/>(废弃)`
 
 > 即将废弃，请使用[SchemaMarkupField](#SchemaMarkupField)
 
-#### InternalForm
+#### `<InternalForm>`
 
 底层的 `<Form>` 组件，具备完整的功能性，没有UI的限制，开发者根据特定场景需求，基于此组件进行开发。
 
@@ -312,7 +336,7 @@ const App = () => {
 }
 ```
 
-#### InternalField
+#### `<InternalField>`
 
 底层的 `<Field>` 组件，具备完整的功能性，没有UI的限制，开发者根据特定场景需求，基于此组件进行开发。
 
@@ -342,7 +366,49 @@ const InputField = props => (
 )
 ```
 
-#### InternalVirtualField
+#### `<InternalFieldList>`
+
+底层的 `<FieldList>` 组件，具备完整的功能性，与`<Field>` 唯一区别是它输入的值只能为数组。
+
+**用法**
+
+示例：以输入框为例，如何快速绑定表单字段。
+
+```jsx
+import { InternalForm as Form, InternalFieldList as FieldList, createFormActions, FormEffectHooks } from '@formily/next'
+
+const actions = createFormActions()
+const App = () => {
+  return (
+    <Form>
+      <React.Fragment>
+        <label>userList: </label>
+        <FieldList name="userList">
+          {({ state, mutators }) => (
+            <React.Fragment>
+              <button onClick={() => {
+                mutators.push(state.value.length)
+              }}>
+                +Add
+              </button>
+              <button onClick={() => {
+                mutators.pop()
+              }}>
+                remove
+              </button>
+              {(state.value).join(',')}
+            </React.Fragment>
+          )}
+        </FieldList>
+      </React.Fragment>
+    </Form>
+  )
+}
+
+ReactDOM.render(<App />, document.getElementById('root'))
+```
+
+#### `<InternalVirtualField>`
 
 底层的 `<VirtualField>` 组件，具备完整的功能性，常用作布局组件，开发者根据特定场景需求，基于此组件进行开发。
 
@@ -395,6 +461,109 @@ const App = () => {
   )
 }
 ```
+
+#### `<Form>`
+
+属性除**schema**外与 `<SchemaForm>` 组件完全一致，适用于源码开发模式，开发者可以基于此二次开发。
+
+| 参数       | 说明                             | 类型                 | 默认值               |
+|:----------|:---------------------------------|:--------------------|:--------------------|
+| fields    |传入自定义表单组件                   | { [key: string]: [ISchemaFieldComponent](#ISchemaFieldComponent) } |                |
+| virtualFields    |传入自定义虚拟组件                   | { [key: string]: [ISchemaVirtualFieldComponent](#ISchemaVirtualFieldComponent) } |                |
+| formComponent    |全局注册Form渲染组件                  | string `or` React.ReactElement |                |
+| formItemComponent    |全局注册FormItem渲染组件                  | React.ReactElement |                |
+| labelCol    |label布局控制                  | number `or` { span: number; offset?: number } |                |
+| wrapperCol    |FormItem布局控制                  | number `or` { span: number; offset?: number } |                |
+| previewPlaceholder    |自定义预览placeholder                  | string `or` ((props: [IPreviewTextProps](#IPreviewTextProps)) => string) |                |
+| prefix    |样式前缀                  | string |                |
+| inline    |是否为内联表单                  | boolean |                |
+| size    |单个 Item 的 size 自定义，优先级高于 Form 的 size, 并且当组件与 Item 一起使用时，组件自身设置 size 属性无效。                  | 'large' `or` 'medium' `or` 'small' |                |
+| labelAlign    |标签的位置                  | 'top' `or` 'left' `or` 'inset' |                |
+| labelTextAlign    |标签的左右对齐方式                  | 'left' `or` 'right' |                |
+| labelCol    |控制所有 Item 的 labelCol                  | `{}` |                |
+| wrapperCol    |控制所有 Item 的 wrapperCol                  | `{}` |                |
+| className    |扩展class                  | string |                |
+| style    |自定义内联样式                  | React.CSSProperties |                |
+| component    |设置标签类型                  | string `or` (() => void) |                |
+| value    |全局value                  | {} |                |
+| defaultValue    |全局defaultValue                  | {} |                |
+| initialValues    |全局initialValues                  | {} |                |
+| actions    |FormActions实例                  | [FormActions](#FormActions) |                |
+| effects    |IFormEffect实例                  | IFormEffect<FormEffectPayload, [FormActions](#FormActions)> |                |
+| form    |表单实例                  | [IForm](#IForm) |                |
+| onChange    |表单变化回调                  | (values: {}) => void |                |
+| onSubmit    |form内有 `htmlType="submit"` 或 actions.submit时 触发                  | (values: {}) => void `or` Promise<{}> |                |
+| onReset    |form内有 <Reset/> 或 actions.reset时 触发                  | () => void |                |
+| onValidateFailed    |校验失败时触发                  | (valideted: [IFormValidateResult](#IFormValidateResult)) => void |                |
+| children    |全局value                  | React.ReactElement `or` ((form: [IForm](#IForm)) => React.ReactElement) |                |
+| useDirty    |是否使用脏检查，默认会走immer精确更新                  | boolean |                |
+| editable    |是否可编辑                  | boolean `or` ((name: string) => boolean) |                |
+| validateFirst    |是否走悲
+
+**用法**
+
+```tsx
+import React from 'react'
+import { Form, FormItem, FormButtonGroup, Submit } from '@formily/next'
+import { Input } from '@formily/next-components'
+import '@alifd/next/dist/next.css'
+
+const App = () => (
+  <Form labelCol={7} wrapperCol={12} onSubmit={console.log}>
+    <div style={{ padding: 20, margin: 20, border: '1px solid red' }}>
+      Form组件内部可以随便插入UI元素了
+    </div>
+    <FormItem label="String" name="string" component={Input} />
+    <FormButtonGroup offset={7}>
+      <Submit>提交</Submit>
+    </FormButtonGroup>
+  </Form>
+)
+```
+
+#### `<FormItem>`
+
+与 `<SchemaMarkupField>` 定位一致，适用于源码开发模式，开发者可以基于此二次开发。
+
+| 参数       | 说明                             | 类型                 | 默认值               |
+|:----------|:---------------------------------|:--------------------|:--------------------|
+| name    |字段名                  | string |                |
+| label    |字段label                   | React.ReactNode |                |
+| description    |字段描述信息                   | React.ReactNode |                |
+| readOnly    | 只读                  | boolean |                |
+| writeOnly    | 只写                  | boolean |                |
+| type    | 字段类型                  | 'string' `or` 'object' `or` 'array' `or` 'number' `or` string |                |
+| enum    | 相当于字段dataSource                  |  `Array<string | number | { label: React.ReactNode; value: any }>` |                |
+| required    | 是否必填，为true会同时设置校验规则                  | string[] `or` boolean |                |
+| format    | 正则规则类型，详细类型可以往后看	                  | string |                |
+| properties    | 对象属性	                  | { [key: string]: [ISchema](#ISchema) } |                |
+| items    | 数组描述	                  | [ISchema](#ISchema) `or` [ISchema](#ISchema)[] |                |
+| patternProperties    | 动态匹配对象的某个属性的 Schema	                  | { [key: string]: [ISchema](#ISchema) } |                |
+| additionalProperties    | 匹配对象额外属性的 Schema	                  | [ISchema](#ISchema) |                |
+| editable    | 字段是否可编辑                  | boolean |                |
+| visible    | 字段是否显示（伴随value的显示和隐藏）                  | boolean |                |
+| display    | 字段是否显示（纯视觉，不影响value）                  | boolean |                |
+| x-component    | 用于渲染的组件                  | string |                | 
+| x-component-props    | 组件的属性                  | { [name: string]: any } |                | 
+| x-rules    | 校验规则                  | [ValidatePatternRules](#ValidatePatternRules) |                | 
+| x-props    | 字段扩展属性	                  | { [name: string]: any } |                | 
+| x-index    | 字段顺序	                  | number |                | 
+| default    | 字段默认值	                  | any |                |
+| const    |  校验字段值是否与 const 的值相等	                 | any |                |
+| multipleOf    | 校验字段值是否可被 multipleOf 的值整除	                  | number |                |
+| maximum    | 最大值                  | number |                |
+| exclusiveMaximum    | 校验最大值（大于等于）	                  | number |                |
+| minimum    | 最小值                  | number |                |
+| exclusiveMinimum    | 最小值（小于等于）	                  | number |                |
+| maxLength    | 最大长度                  | number |                |
+| minLength    | 最小长度                  | number |                |
+| pattern    | 正则校验规则	                  | string `or` RegExp |                |
+| maxItems    | 最大项数                  | number |                |
+| minItems    | 最小项数                  | number |                |
+| uniqueItems    | 是否校验重复	                  | boolean |                |
+| maxProperties    | 最大属性数量	                  | number |                |
+| minProperties    | 最小属性数量	                  | number |                |
+
 
 #### `<FormButtonGroup/>`
 
@@ -564,6 +733,80 @@ const App = () => {
 
 ReactDOM.render(<App />, document.getElementById('root'))
 ```
+
+#### `useValueLinkageEffect`
+
+用于描述联动的hook，对应**Schema**中的 `x-linkages`，**Formily** 内置的实现有 [useValueSchemaLinkageEffect](#useValueSchemaLinkageEffect), [useValueStateLinkageEffect](#useValueStateLinkageEffect), [useValueVisibleLinkageEffect](#useValueVisibleLinkageEffect)。
+
+对应关系如下所示：
+
+| hook名       | 对应schemaType                             | 说明                 |
+|:----------|:---------------------------------|:--------------------|
+| useValueVisibleLinkageEffect    |value:visible                  | 由值变化控制指定字段显示隐藏 |
+| useValueSchemaLinkageEffect    |value:schema                  | 由值变化控制指定字段的 schema |
+| useValueStateLinkageEffect    |value:state                  | 由值变化控制指定字段的状态 |
+
+下面介绍自定义注册联动规则的示例, 修改组件props
+
+**用法**
+
+```tsx
+import { useValueLinkageEffect, SchemaForm, SchemaMarkupField as Field } from '@formily/next'
+
+const useValueCustomLinkageEffect = (expressionScope?: any) =>
+  useValueLinkageEffect({
+  type: 'value:custom',
+  resolve: ({ target, custom }, { setFieldState }) => {
+    setFieldState(target, innerState => {
+      Object.assign(innerState.props, custom)
+    })
+  },
+  reject: ({ target, otherwise }, { setFieldState }) => {
+    if (!otherwise) return
+    setFieldState(target, innerState => {
+      Object.assign(innerState.props, otherwise)
+    })
+  },
+  expressionScope
+})
+
+const expressionScope = {
+  customTitle: 'this is custom title',
+  customDescription: 'this is custom description',
+  customPlaceholder: 'this is custom placeholder'
+}
+
+const App = () => {
+  return  <SchemaForm
+  expressionScope={expressionScope}
+  effects={($, actions) => {
+    useValueCustomLinkageEffect(expressionScope)
+  }}
+  schema={{
+    type: "object",
+    properties: {
+      aaa: {
+        type: "string",
+        "x-linkages": [
+          {
+            type: "value:custom",
+            target: "bbb",
+            condition: '{{ $self.value == "123"}}', //当值为123时发生联动
+            custom: { //控制bbb字段的标题
+              title: "这是标题"
+            },
+            otherwise: { //条件不满足时控制bbb字段标题
+              title: ""
+            }
+          }
+        ]
+      },
+      bbb: { type: "string" },
+    }
+  }} />
+}
+```
+
 
 #### `useFormEffects`
 
